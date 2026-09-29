@@ -1,7 +1,11 @@
 -- Unified Slack + Discord archive.
--- tinbase native = Postgres 17: tsvector and pg_trgm work; pgvector does not.
+-- Canonical store: Postgres 16+ with pg_trgm + pgvector (original design).
+-- docker compose uses pgvector/pgvector:pg16. tinbase can apply this only if
+-- CREATE EXTENSION vector is skipped *and* you comment out the vector column;
+-- do not use tinbase for the Hetzner deploy.
 
-create extension if not exists pg_trgm with schema extensions;
+create extension if not exists pg_trgm;
+create extension if not exists vector;
 
 create type public.origin as enum ('slack', 'discord');
 
@@ -25,8 +29,8 @@ create table public.users (
   primary key (origin, native_id)
 );
 
-create index users_handle_trgm on public.users using gin (handle extensions.gin_trgm_ops);
-create index users_display_trgm on public.users using gin (display_name extensions.gin_trgm_ops);
+create index users_handle_trgm on public.users using gin (handle gin_trgm_ops);
+create index users_display_trgm on public.users using gin (display_name gin_trgm_ops);
 
 create table public.channels (
   origin public.origin not null,
@@ -66,7 +70,7 @@ create table public.messages (
 );
 
 create index messages_tsv on public.messages using gin (tsv);
-create index messages_plain_trgm on public.messages using gin (text_plain extensions.gin_trgm_ops);
+create index messages_plain_trgm on public.messages using gin (text_plain gin_trgm_ops);
 create index messages_origin_sent on public.messages (origin, sent_at);
 create index messages_user_sent on public.messages (origin, user_id, sent_at);
 create index messages_channel_sent on public.messages (origin, channel_id, sent_at);
@@ -84,12 +88,13 @@ create table public.thread_docs (
   tsv tsvector generated always as (
     to_tsvector('english', coalesce(text_plain, ''))
   ) stored,
-  -- tinbase has no pgvector yet; swap to vector(1024) when using --database-url
-  embedding float4[]
+  embedding vector(1024)
 );
 
 create index thread_docs_tsv on public.thread_docs using gin (tsv);
 create index thread_docs_origin_sent on public.thread_docs (origin, sent_at);
+create index thread_docs_embedding on public.thread_docs
+  using hnsw (embedding vector_cosine_ops);
 
 create table public.files (
   origin public.origin not null,
@@ -114,4 +119,4 @@ create table public.reactions (
 
 comment on type public.origin is 'Source system; filter every search with this or omit for both.';
 comment on table public.thread_docs is 'RAG unit: Slack thread or Discord thread-channel; standalones are one-row docs.';
-comment on column public.thread_docs.embedding is 'float4[] until pgvector is available; cosine in app or SQL.';
+comment on column public.thread_docs.embedding is 'pgvector; 1024-d cosine via HNSW.';

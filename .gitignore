@@ -9,3 +9,6 @@ exports/
 *.zip
 *.log
 discord-token.txt
+__pycache__/
+*.pyc
+.venv/

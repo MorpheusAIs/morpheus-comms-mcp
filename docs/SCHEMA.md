@@ -2,20 +2,11 @@
 
 One Postgres, two origins. Same tables for Slack dump and DiscordChatExporter JSON. Search is cross-source unless `origin` is passed.
 
-Backend: [tinbase](https://www.tinbase.dev/) native engine (Postgres 17). Migrations follow Supabase CLI layout so they stay portable.
+Backend: **Postgres 16+ with pg_trgm + pgvector**, same image locally and on Hetzner (`pgvector/pgvector:pg16`). See `docs/POSTGRES.md`.
 
-## Tinbase constraints that shape this
+tinbase was a local-only idea; it does not ship pgvector, so it is not part of this stack.
 
-| Feature | Status in tinbase 0.18 |
-|---|---|
-| `tsvector` / GIN / `websearch_to_tsquery` | yes (real Postgres 17) |
-| `pg_trgm`, `pgcrypto`, `citext` | yes (extensions schema) |
-| PostgREST FTS (`fts`, `plfts`) | yes — MCP can use supabase-js |
-| `pgvector` | **no** — needs an extension binary |
-| ParadeDB `pg_search` | **no** |
-| One writer at a time | yes — fine for ingest-then-query |
-
-Keyword / `from:` / date / channel search goes live on tinbase. Semantic / RAG embeddings are stored as `float4[]` until we point tinbase at a Postgres with pgvector (`tinbase start --database-url postgres://…`) or tinbase ships the extension. Cosine can be computed in SQL or in the MCP process.
+Keyword / `from:` / date / channel search uses `tsvector`. Semantic / RAG uses `thread_docs.embedding vector(1024)` with HNSW cosine.
 
 ## Tables
 
@@ -50,7 +41,7 @@ where m.tsv @@ websearch_to_tsquery('english', 'compute router')
 order by ts_rank_cd(m.tsv, websearch_to_tsquery('english', 'compute router')) desc;
 ```
 
-MCP (later): `search_messages`, `get_thread`, `get_message`, `list_channels`, `grep` — all take optional `origin`. Direct Postgres / PostgREST is the same tables.
+MCP (`mcp/server.py`): `search_messages`, `get_thread`, `get_message`, `list_channels`, `grep` — all take optional `origin`. Semantic search waits until ingest writes embeddings.
 
 ## Why this is compatible with the Slack design
 
