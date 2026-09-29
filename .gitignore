@@ -1,0 +1,11 @@
+.tinbase/
+.DS_Store
+.env
+.env.local
+node_modules/
+dist/
+data/
+exports/
+*.zip
+*.log
+discord-token.txt
