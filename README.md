@@ -18,6 +18,7 @@ Dumps stay outside git (`~/Documents/Morpheus/slackdump_*.zip`, `~/Documents/dis
 
 ```
 docs/DISCORD_EXPORT.md     install DiscordChatExporter CLI + extract steps
+docs/SLACK_DUMP.md         install slackdump, fresh export, import existing zip
 docs/POSTGRES.md           local Postgres 16 + pgvector
 docs/HETZNER.md            deploy MCP docker image on an existing Hetzner box
 docs/SCHEMA.md             tables, FTS, RAG unit
@@ -39,6 +40,6 @@ docker compose up -d postgres # schema applies on empty volume
 
 1. Fresh Discord token → list channels (`docs/DISCORD_EXPORT.md`) → you pick IDs
 2. Export JSON, no media, skip intro-gmor / onboarding / voice
-3. Slack ingest from `slackdump_20260826_012610.zip`
+3. Slack: use existing zip or dump again (`docs/SLACK_DUMP.md`), then ingest
 4. Discord ingest from the new JSON
 5. Point agents at the MCP (`docs/HETZNER.md` on the server)

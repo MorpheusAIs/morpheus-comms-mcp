@@ -1,6 +1,6 @@
 # Ingest mapping
 
-Do not ingest until dumps are on disk. Slack zip is already at `~/Documents/Morpheus/slackdump_20260826_012610.zip` (extract `~/temp/slackdump-extract`). Discord JSON lands in `~/Documents/discord-export/morpheus/`. Skip `intro-gmor` (`1151741791226306593`) even if it is still on disk.
+Do not ingest until dumps are on disk. Slack zip is already at `~/Documents/Morpheus/slackdump_20260826_012610.zip` (extract `~/temp/slackdump-extract`). How to dump or unzip: `docs/SLACK_DUMP.md`. Discord JSON lands in `~/Documents/discord-export/morpheus/`. Skip `intro-gmor` (`1151741791226306593`) even if it is still on disk.
 
 ## Slack
 
