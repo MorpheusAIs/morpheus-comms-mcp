@@ -14,7 +14,7 @@ Dumps stay outside git (`~/Downloads/slackdump_*.zip` on this Mac, extracted at 
 - MCP: FTS / grep / thread search / semantic + hybrid search / stats, plus a REST shim (`docs/MCP.md`)
 - Embeddings not run yet (`python -m ingest.embed`; needs `EMBED_API_KEY` with credit). Until then semantic/hybrid fall back to FTS
 - Discord ingest written + fixture-tested; no export on disk yet. Channel list needs a **fresh** user token (August token is dead)
-- Remote GitHub repo is private (`MorpheusAIs/morpheus-comms`); push when you say so
+- Remote: private GitHub repo [`MorpheusAIs/morpheus-comms-mcp`](https://github.com/MorpheusAIs/morpheus-comms-mcp) (local checkout folder is still `morpheus-comms`; Compose derives its project/volume names from it)
 
 ## Layout
 

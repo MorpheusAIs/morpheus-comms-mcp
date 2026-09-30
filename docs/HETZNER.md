@@ -44,7 +44,7 @@ Clone the **private** repo with a deploy key or `gh` as a machine user. Do not c
 
 ```bash
 cd /opt/morpheus-comms
-git clone git@github.com:MorpheusAIs/morpheus-comms.git .
+git clone git@github.com:MorpheusAIs/morpheus-comms-mcp.git .
 ```
 
 ## 2. Secrets
