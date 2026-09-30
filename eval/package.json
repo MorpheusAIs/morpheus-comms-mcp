@@ -1,0 +1,8 @@
+{
+  "name": "morpheus-comms-eval",
+  "private": true,
+  "type": "module",
+  "description": "Retrieval benchmark: Postgres FTS vs Ternlight embeddings over thread_docs",
+  "scripts": { "ternlight": "node ternlight_eval.mjs" },
+  "dependencies": { "@ternlight/base": "^0.1.1", "pg": "^8.13.0" }
+}
