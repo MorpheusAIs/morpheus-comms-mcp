@@ -22,7 +22,9 @@ No identity-linking table. A handful of display names will collide; searches sta
 - `files` — Slack `__uploads/` + Discord attachment URLs (CDN URLs expire)
 - `reactions` — emoji + user id list
 
-`messages.subtype` flags join/system noise (`channel_join`, `GuildMemberJoin`, `bot_message`, …). Keep the rows; exclude them from `thread_docs` and FTS queries by default.
+`messages.subtype` flags join/system noise (`channel_join`, `GuildMemberJoin`, `bot_message`, …). Keep the rows; exclude them from `thread_docs` and FTS queries by default with `public.is_content(subtype)` (true for null, `thread_broadcast`, `file_share`, `me_message`, Discord `Default` / `Reply`).
+
+Slack `messages.native_id` is `{channel}:{ts}` (ts is only unique per channel). `thread_docs.id` is the parent message id (`slack:{channel}:{thread_ts}`, `discord:{thread id}` = starter message) or the standalone message id; `text_plain` is `@handle: text` lines plus `[file: name]`.
 
 Generated `tsv` columns + GIN indexes cover keyword search. `pg_trgm` GIN on `text_plain` covers fuzzy `grep`.
 
@@ -34,14 +36,14 @@ select m.id, m.origin, m.sent_at, m.text_plain
 from messages m
 join users u on u.origin = m.origin and u.native_id = m.user_id
 where m.tsv @@ websearch_to_tsquery('english', 'compute router')
-  and m.subtype is null
+  and public.is_content(m.subtype)
   and ($origin::origin is null or m.origin = $origin)
   and ($from::text is null or u.handle ilike $from or u.display_name ilike $from)
   and m.sent_at >= $after and m.sent_at < $before
 order by ts_rank_cd(m.tsv, websearch_to_tsquery('english', 'compute router')) desc;
 ```
 
-MCP (`mcp/server.py`): `search_messages`, `get_thread`, `get_message`, `list_channels`, `grep` — all take optional `origin`. Semantic search waits until ingest writes embeddings.
+MCP (`mcp/server.py`, `docs/MCP.md`): `hybrid_search`, `search_threads`, `semantic_search`, `search_messages`, `grep`, `get_thread`, `get_message`, `list_channels`, `list_users`, `channel_activity`, `archive_stats` — all take optional `origin`; DMs excluded unless `include_dms`. Semantic/hybrid fall back to FTS until `ingest.embed` fills embeddings.
 
 ## Why this is compatible with the Slack design
 

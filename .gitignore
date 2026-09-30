@@ -12,3 +12,5 @@ discord-token.txt
 __pycache__/
 *.pyc
 .venv/
+.pytest_cache/
+.omc/

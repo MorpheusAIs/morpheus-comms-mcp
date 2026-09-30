@@ -2,10 +2,10 @@
 
 Workspace: **morpheus-qyv9301** (team `T08PC074FJQ`). Tool: [rusq/slackdump](https://github.com/rusq/slackdump) v4.4.4 (Homebrew).
 
-The zip is Slack-export-format JSON plus slackdump extras (`__uploads/` for attachment bytes). That is the source for Postgres ingest (`origin=slack`). Do **not** commit dumps. Keep them next to the existing archive:
+The zip is Slack-export-format JSON plus slackdump extras (`__uploads/` for attachment bytes). That is the source for Postgres ingest (`origin=slack`). Do **not** commit dumps. Keep them outside the repo. On this Mac the existing archive is in `~/Downloads/`:
 
 ```
-~/Documents/Morpheus/slackdump_20260826_012610.zip   # ~3 GB, 26 Aug 2026
+~/Downloads/slackdump_20260826_012610.zip            # ~3 GB, 26 Aug 2026
 ~/temp/slackdump-extract/                            # unzip of that dump
 ```
 
@@ -123,7 +123,7 @@ slackdump convert -f export -o "$OUT/slackdump_${STAMP}.zip" "$DIR"
 
 The August dump is already the right format. You do **not** need to dump again to ingest it.
 
-Path: `~/Documents/Morpheus/slackdump_20260826_012610.zip`
+Path: `~/Downloads/slackdump_20260826_012610.zip`
 ~3 GB, 5188 files, Mattermost layout, messages Apr 2025-Aug 2026.
 
 ### 4a. Extract for Postgres ingest (this repo)
@@ -131,7 +131,7 @@ Path: `~/Documents/Morpheus/slackdump_20260826_012610.zip`
 Ingest reads a directory of `channels.json`, `users.json`, `dms.json`, `mpims.json`, `{channel}/*.json`, and `__uploads/`. Unzip once; do not unzip into git.
 
 ```bash
-ZIP="$HOME/Documents/Morpheus/slackdump_20260826_012610.zip"
+ZIP="$HOME/Downloads/slackdump_20260826_012610.zip"
 DEST="$HOME/temp/slackdump-extract"
 
 mkdir -p "$DEST"
@@ -145,7 +145,7 @@ ls "$DEST/users.json" "$DEST/channels.json" "$DEST/dms.json" "$DEST/mpims.json"
 # files:     $DEST/__uploads/<FILE_ID>/...
 ```
 
-Field mapping: `docs/INGEST.md` (Slack section). The Python ingest job is **not built yet**; when it exists it should take `--source "$DEST"` (or the zip, unzipping to a temp dir). Until then, `$DEST` is the working copy.
+Field mapping and run steps: `docs/INGEST.md`. `python -m ingest.slack --source "$DEST"` (or `--source "$ZIP"`: the zip is read in place, no unzip).
 
 Re-extract over a dirty tree:
 
@@ -158,7 +158,7 @@ unzip -q "$ZIP" -d "$DEST"
 ### 4b. Browse the zip without extracting
 
 ```bash
-slackdump view "$HOME/Documents/Morpheus/slackdump_20260826_012610.zip"
+slackdump view "$HOME/Downloads/slackdump_20260826_012610.zip"
 ```
 
 Opens a local viewer. Same command works on an extracted directory.
@@ -166,7 +166,7 @@ Opens a local viewer. Same command works on an extracted directory.
 Browse-only MCP (not the Hetzner search MCP):
 
 ```bash
-slackdump mcp "$HOME/Documents/Morpheus/slackdump_20260826_012610.zip"
+slackdump mcp "$HOME/Downloads/slackdump_20260826_012610.zip"
 # tools: load_source, list_channels, get_messages, get_thread
 ```
 
@@ -177,7 +177,7 @@ Useful if you want SQL over the dump without waiting for our ingest:
 ```bash
 slackdump convert -f database \
   -o "$HOME/temp/slackdump-sqlite" \
-  "$HOME/Documents/Morpheus/slackdump_20260826_012610.zip"
+  "$HOME/Downloads/slackdump_20260826_012610.zip"
 # then: sqlite3 "$HOME/temp/slackdump-sqlite/slackdump.sqlite"
 ```
 
@@ -199,7 +199,7 @@ for name in ("users.json", "channels.json", "dms.json", "mpims.json"):
     print(f"{name:16} {len(data):5d}")
 days = list(root.glob("*/*.json"))
 print("day files", len(days))
-uploads = list((root / "__uploads").glob("*/*")) if (root / "__uploads").exists() else []
+uploads = list((root / "__uploads").glob("*/*")) if (root / "__uploads").exists() else []  # none on this Mac: JSON-only extract
 print("uploaded files", len(uploads))
 PY
 ```

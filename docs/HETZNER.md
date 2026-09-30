@@ -98,7 +98,7 @@ comms.example.com {
 }
 ```
 
-nginx:
+nginx (repeat for `/api/tools` if non-MCP callers use the REST shim):
 
 ```
 location /mcp {
@@ -136,7 +136,11 @@ ufw enable
 }
 ```
 
-Tools (once ingest has run): `search_messages`, `get_thread`, `get_message`, `list_channels`, `grep`. All take optional `origin` = `slack` | `discord`.
+Tools: `docs/MCP.md` (`hybrid_search` first). All take optional `origin` = `slack` | `discord`; DMs are excluded unless `include_dms=true`. Non-MCP callers: `POST /api/tools/{name}` with the same bearer token.
+
+Behind the proxy, optionally set `MCP_ALLOWED_HOSTS=comms.example.com` (Host allowlist) and `MCP_CORS_ORIGINS=https://frontend.example.com` (CORS is off by default). Set `EMBED_API_KEY` for semantic/hybrid search.
+
+Data: run ingest on the Mac against a tunnel (`ssh -L 5433:127.0.0.1:5432 hetzner-ai-gateway`, then `--database-url postgresql://comms:…@127.0.0.1:5433/morpheus_comms`), or `pg_dump` local → `pg_restore` there.
 
 ## 6. Updates
 
