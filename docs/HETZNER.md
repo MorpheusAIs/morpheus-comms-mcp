@@ -175,3 +175,34 @@ Restore is `pg_restore` into a fresh `pgvector/pgvector:pg16` container.
 - tinbase.
 - Binding Postgres to `0.0.0.0`.
 - Putting `DISCORD_TOKEN` in Compose.
+
+## Host already running a web server (TLS overlay)
+
+When :80 is taken by an existing site (for example a host Caddy serving another project), do not touch its config. Use `deploy/tls/compose.tls.yml`:
+
+- a separate `caddy` container binds **:443 only**;
+- it gets a Let's Encrypt certificate for `COMMS_DOMAIN` via the TLS-ALPN challenge;
+- it proxies to `mcp:8080` on the compose network.
+
+Postgres and the MCP stay on loopback. The overlay also sets memory limits (postgres 768m, mcp 256m, caddy 128m).
+
+```bash
+# .env additions
+COMPOSE_FILE=docker-compose.yml:deploy/tls/compose.tls.yml
+COMMS_DOMAIN=comms.62-238-7-47.sslip.io   # any name resolving to the box; sslip.io needs no DNS setup
+
+docker compose up -d --build
+curl -s https://$COMMS_DOMAIN/health
+```
+
+**Moving the local, already-ingested archive** (instead of re-ingesting on the server):
+
+```bash
+# laptop
+docker compose exec -T postgres pg_dump -U comms -d morpheus_comms --data-only -Fc > comms.dump
+scp comms.dump server:/opt/morpheus-comms/
+# server (schema already created by supabase/migrations on first boot)
+docker compose exec -T postgres pg_restore -U comms -d morpheus_comms --data-only --disable-triggers < comms.dump
+```
+
+Deployed this way on **the-uncounted** (62.238.7.47) at `/opt/morpheus-comms`, next to the host Caddy that serves the us-uncounted site on :80.

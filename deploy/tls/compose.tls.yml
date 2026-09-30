@@ -1,0 +1,33 @@
+# TLS overlay for a host that already runs its own web server on :80.
+# Adds a dedicated Caddy container on :443 that terminates HTTPS for $COMMS_DOMAIN and proxies to the
+# MCP over the compose network. It never binds :80 and never touches the host proxy config; certificates
+# come from Let's Encrypt via the TLS-ALPN challenge on :443.
+#
+#   docker compose -f docker-compose.yml -f deploy/tls/compose.tls.yml up -d
+#   (or set COMPOSE_FILE=docker-compose.yml:deploy/tls/compose.tls.yml in .env)
+
+services:
+  postgres:
+    mem_limit: 768m
+
+  mcp:
+    mem_limit: 256m
+
+  tls:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      - mcp
+    environment:
+      COMMS_DOMAIN: ${COMMS_DOMAIN:?set COMMS_DOMAIN in .env}
+    ports:
+      - "443:443"
+    volumes:
+      - ./deploy/tls/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 128m
+
+volumes:
+  caddy_data:
+  caddy_config:

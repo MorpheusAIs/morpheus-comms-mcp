@@ -1,0 +1,19 @@
+# HTTPS front for the comms MCP (see compose.tls.yml). Port 80 belongs to the host's own web server,
+# so no HTTP->HTTPS redirect listener and no HTTP-01 challenge: certificates use TLS-ALPN-01 on :443.
+{
+	auto_https disable_redirects
+}
+
+{$COMMS_DOMAIN} {
+	tls {
+		issuer acme {
+			disable_http_challenge
+		}
+	}
+	encode zstd gzip
+	reverse_proxy mcp:8080 {
+		# Streamable HTTP responses may be SSE; don't buffer them.
+		flush_interval -1
+	}
+	log
+}
